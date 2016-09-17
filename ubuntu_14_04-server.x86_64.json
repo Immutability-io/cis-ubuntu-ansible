@@ -1,0 +1,41 @@
+{
+  "variables": {
+    "aws_access_key":    "",
+    "aws_secret_key":    "",
+    "scripts_dir": "scripts"
+  },
+  "builders": [{
+      "type": "amazon-ebs",
+      "access_key":    "{{user `aws_access_key`}}",
+      "secret_key":    "{{user `aws_secret_key`}}",
+      "region": "us-east-1",
+      "source_ami": "ami-2d39803a",
+      "instance_type": "t2.micro",
+      "ssh_username": "ubuntu",
+      "ami_name": "cis-example {{timestamp}}"
+  }],
+  "provisioners": [
+    {
+      "type": "shell",
+      "execute_command": "echo {{user `ssh_username`}} | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+      "inline": [
+        "mkdir -p /ops/{{user `scripts_dir`}}",
+        "chmod a+w /ops/{{user `scripts_dir`}}"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "{{user `scripts_dir`}}/.",
+      "destination": "/ops/{{user `scripts_dir`}}"
+    },
+    {
+      "type": "shell",
+      "execute_command": "echo {{user `ssh_username`}} | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+      "inline": [
+        "sh /ops/{{user `scripts_dir`}}/dependencies.sh",
+        "sh /ops/{{user `scripts_dir`}}/playbook.sh"
+      ]
+    }
+
+  ]
+}
