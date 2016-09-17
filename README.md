@@ -1,95 +1,72 @@
 # CIS for Ubuntu 14.04
 
-[![Build Status](https://travis-ci.org/awailly/cis-ubuntu-ansible.svg?branch=master)](https://travis-ci.org/awailly/cis-ubuntu-ansible)
-[![Documentation Status](https://readthedocs.org/projects/cis-ubuntu-ansible/badge/?version=latest)](https://readthedocs.org/projects/cis-ubuntu-ansible/?badge=latest)
-[![Coverage Status](https://coveralls.io/repos/awailly/cis-ubuntu-ansible/badge.svg?branch=master)](https://coveralls.io/r/awailly/cis-ubuntu-ansible?branch=master)
+This project was forked from https://github.com/awailly/cis-ubuntu-ansible.
 
 ## Prerequisites
 
-The role is focused on hardening an Ubuntu 14.04 system. However it has been successfully tested on other Debian based systems (Debian 8, Raspbian). The minimum requirements of the targeted system are `ssh`, `aptitude` and `python2`; `ansible>=1.9` is required on your local system.
+The role is focused on hardening an Ubuntu 14.04 system. [Vagrant](https://www.vagrantup.com/downloads.html) and [VirtualBox](https://www.virtualbox.org/wiki/Downloads) are required on your local system. All local dependencies will resolved during Vagrant provisioning.
 
 ## Usage
 
-### One liner installation & execution
+The first step is to bring up your Vagrant box: `vagrant up`. This will install Ansible, Packer, and a host of other dependencies.
 
-The following will automatically install Ansible, download and run the playbook on your local system.
-```
-$ \curl -sSL http://git.io/vZw8S > /tmp/cis.sh && bash /tmp/cis.sh
-```
-To apply the playbook on a remote system:
-```
-$ IP=[remote host's IP] USER=[remote user] \curl -sSL http://git.io/vZw8S | bash
-```
+Once the Vagrant box is up, the next step is to `vagrant ssh`. This will connect you to the Vagrant box. Your local directory is mounted as `/vagrant`, so, make that your current directory: `cd /vagrant`.
 
-### Manual installation
+Now you are ready to build a hardened Ubuntu 14.04 AMI. You will need your AWS keys to do this, so set these values in your environment:
 
-Install dependencies on your host (on Ubuntu 14.04):
-
-```bash
-$ sudo apt-get install python-pip git python-dev
-$ sudo pip install ansible markupsafe
+```
+$ export AWS_ACCESS_KEY=...
+$ export AWS_SECRET_KEY=...
 ```
 
-Create a placeholder to describe your machine:
+Now you can run the Packer build. This will use the local version of Ansible that you just installed (via `vagrant up`) to run the playbook.
 
-```bash
-$ mkdir -p ansible/roles-ubuntu/roles
-$ cd ansible/roles-ubuntu
-$ git clone https://github.com/awailly/cis-ubuntu-ansible.git roles/cis
 ```
-
-Create a playbook in the _roles-ubuntu_ folder:
-
-```bash
-$ cat >>  playbook.yml << 'EOF'
----
-- hosts: all
-  roles:
-    - cis
-EOF
+$ sh scripts/build.sh
 ```
 
 ### Tuning the environment
 
 You have to tune the environment to match your security requirements. The default is very restrictive and will perform strong modifications on the system. All requirements are enabled and may not work. For example the rsyslog server address have to be defined to respect the CIS rule.
 
-*Read `default/main.yml` file and set your variables in `vars/main.yml`*
+*Read `default/main.yml` file*
 
 For the CI tests we only create specific files for the environment (see `tests/travis_defaults.yml`) in the `vars/` directory.
 
-### Running the role
+### Development
 
-Replace the target information (USER, IPADDRESS) and run the playbook with a version of ansible higher than 1.8:
+I used Vagrant to test the Ansible playbook. If you wish to tune the defaults or change the tasks, you will probably want to do the same. In this case, there are a few options:
 
-    $ ansible-playbook -b -u USER -i 'IPADDRESS,' playbook.yml
+1. Run the playbook during Vagrant provisioning.
 
-Note that this command will perform modifications on the target. Add the `-C` option to only check for modifications and audit the system. However, some tasks cannot be audited as they need to register a variable on the target and thus modify the system.
+This will simulate the Packer build the best. In this case, you will want to uncomment the following stanza in the Vagrantfile:
 
-If the user you are using is not privileged you have to use the `-b` (`become`) option to perform privilege escalation. The password required to become superuser can be specified with the `--ask-become-pass` option.
+```
+#  config.vm.provision "ansible_local" do |ansible|
+#    ansible.playbook = "provisioning/playbook.yml"
+#    ansible.sudo = true
+#  end
 
-### Optimizations
+```
 
-Ansible come with some great options that can improve your operations:
+2. Run the playbook manually.
 
-- Add the `-e "pipelining=True"` option to the command line to speed up the hardening process.
-- Specify the private key to use with the `--private-key=~/.ssh/id_rsa` option.
-- The conventional method to specify hosts in ansible is to create an `inventory` file and feed it with a group of hosts to process.
+In this case, you will `vagrant ssh`, change to the `/vagrant/provisioning` directory and run the following command:
+
+```
+$ ansible-playbook -b -u $USER --connection=local -i "127.0.0.1," playbook.yml --become
+```
+
+NOTE: The `-C` option will run the playbook *without* modifying the system. This is useful to see what exactly would change - it audits the OS without hardening. If you want to harden, then add the `-C`:
+
+```
+$ ansible-playbook -b -C -u $USER --connection=local -i "127.0.0.1," playbook.yml --become
+```
 
 ## Documentation
 
 The details of each tasks operated on the target system is available in the [online documentation](http://cis-ubuntu-ansible.readthedocs.org/en/latest/). It is build on every commit based on the `docs/` repository content.
 
-## Contributing
-
-We accept modifications through pull requests. Please note that CI tests and code coverage are being performed automatically. All tests have to pass before accepting the contribution.
-
-Issues are welcome too, and we expect reproductible steps to have efficient discussions.
-
 ## License
 
 This project is under [GPL license](LICENSE).
-
-## Contact
-
-We have a dedicated IRC channel for the project on chat.freenode.net. Join us on ##cis-ansible or with the [direct link](https://kiwiirc.com/client/irc.freenode.net/?nick=GuestAnsib|?##cis-ansible).
-

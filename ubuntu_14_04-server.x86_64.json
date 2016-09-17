@@ -35,6 +35,13 @@
         "sh /ops/{{user `scripts_dir`}}/dependencies.sh",
         "sh /ops/{{user `scripts_dir`}}/playbook.sh"
       ]
+    },
+    {
+      "type": "ansible-local",
+      "playbook_file": "provisioning/playbook.yml",
+      "role_paths": [
+        "provisioning/roles/cis"
+      ]
     }
 
   ]
