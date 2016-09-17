@@ -37,7 +37,7 @@ For the CI tests we only create specific files for the environment (see `tests/t
 
 I used Vagrant to test the Ansible playbook. If you wish to tune the defaults or change the tasks, you will probably want to do the same. In this case, there are a few options:
 
-1. Run the playbook during Vagrant provisioning.
+## Run the playbook during Vagrant provisioning.
 
 This will simulate the Packer build the best. In this case, you will want to uncomment the following stanza in the Vagrantfile:
 
@@ -49,7 +49,7 @@ This will simulate the Packer build the best. In this case, you will want to unc
 
 ```
 
-2. Run the playbook manually.
+## Run the playbook manually.
 
 In this case, you will `vagrant ssh`, change to the `/vagrant/provisioning` directory and run the following command:
 
