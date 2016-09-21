@@ -1,19 +1,41 @@
 {
   "variables": {
-    "aws_access_key":    "",
-    "aws_secret_key":    "",
-    "scripts_dir": "scripts"
+    "aws_access_key":     "{{env `AWS_ACCESS_KEY_ID`}}",
+    "aws_secret_key":     "{{env `AWS_SECRET_ACCESS_KEY`}}",
+    "aws_region":         "{{env `DEFAULT_REGION_NAME`}}",
+    "source_ami":         "{{env `DEFAULT_AMI_ID`}}",
+    "subnet_id":          "{{env `DEFAULT_SUBNET_ID`}}",
+    "vpc_id":             "{{env `DEFAULT_VPC_ID`}}",
+    "instance_type":      "{{env `DEFAULT_INSTANCE_TYPE`}}",
+    "name":               "{{env `DEFAULT_AMI_NAME`}}-{{env `DEFAULT_AMI_ID`}}",
+    "security_group_id":  "",
+    "scripts_dir":        "scripts",
+    "config_dir":         "config",
+    "ssh_username":       "ubuntu",
+    "dns_listen_addr":    "0.0.0.0"
   },
-  "builders": [{
-      "type": "amazon-ebs",
-      "access_key":    "{{user `aws_access_key`}}",
-      "secret_key":    "{{user `aws_secret_key`}}",
-      "region": "us-east-1",
-      "source_ami": "ami-2d39803a",
-      "instance_type": "t2.micro",
-      "ssh_username": "ubuntu",
-      "ami_name": "cis-example {{timestamp}}"
-  }],
+  "builders": [
+    {
+      "type":                     "amazon-ebs",
+      "access_key":               "{{user `aws_access_key`}}",
+      "secret_key":               "{{user `aws_secret_key`}}",
+      "region":                   "{{user `aws_region`}}",
+      "vpc_id":                   "{{user `vpc_id`}}",
+      "subnet_id":                "{{user `subnet_id`}}",
+      "security_group_id":        "{{user `security_group_id`}}",
+      "source_ami":               "{{user `source_ami`}}",
+      "instance_type":            "{{user `instance_type`}}",
+      "ssh_username":             "{{user `ssh_username`}}",
+      "ami_name":                 "{{user `name`}}-{{timestamp}}",
+      "ami_virtualization_type":  "hvm",
+      "ami_description":          "{{user `name`}}",
+      "ssh_private_ip":           false,
+      "associate_public_ip_address": true,
+      "tags": {
+        "artifact": "{{user `name`}}"
+      }
+    }
+  ],
   "provisioners": [
     {
       "type": "shell",

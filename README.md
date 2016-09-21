@@ -15,9 +15,20 @@ Once the Vagrant box is up, the next step is to `vagrant ssh`. This will connect
 Now you are ready to build a hardened Ubuntu 14.04 AMI. You will need your AWS keys to do this, so set these values in your environment:
 
 ```
-$ export AWS_ACCESS_KEY=...
-$ export AWS_SECRET_KEY=...
+export AWS_ACCESS_KEY_ID="REPLACE"
+export AWS_SECRET_ACCESS_KEY="REPLACE"
+
+# the following settings are for the CIAM-Non-Prod account
+export DEFAULT_REGION_NAME="us-east-1"
+export DEFAULT_VPC_ID="vpc-48da562f"
+export DEFAULT_AMI_ID="ami-fce3c696"
+export DEFAULT_SUBNET_ID="subnet-693c201f"
+export DEFAULT_INSTANCE_TYPE="t2.micro"
 ```
+
+There is a script `env.sh` that you can use to set these environment variables.
+
+*NOTE: Your AMI must be based on Ubuntu 14.04.*
 
 Now you can run the Packer build. This will use the local version of Ansible that you just installed (via `vagrant up`) to run the playbook.
 
@@ -66,7 +77,3 @@ $ ansible-playbook -b -C -u $USER --connection=local -i "127.0.0.1," playbook.ym
 ## Documentation
 
 The details of each tasks operated on the target system is available in the [online documentation](http://cis-ubuntu-ansible.readthedocs.org/en/latest/). It is build on every commit based on the `docs/` repository content.
-
-## License
-
-This project is under [GPL license](LICENSE).

@@ -1,0 +1,52 @@
+{
+  "variables": {
+    "aws_access_key":   "{{env `AWS_ACCESS_KEY_ID`}}",
+    "aws_secret_key":   "{{env `AWS_SECRET_ACCESS_KEY`}}",
+    "source_ami":       "{{env `DEFAULT_AMI_ID`}}",
+    "aws_region":       "{{env `DEFAULT_REGION_NAME`}}",
+    "instance_type":    "{{env `DEFAULT_INSTANCE_TYPE`}}",
+    "name":             "{{env `DEFAULT_AMI_NAME`}}-{{env `DEFAULT_AMI_ID`}}",
+    "scripts_dir":      "scripts"
+  },
+  "builders": [{
+      "type":             "amazon-ebs",
+      "access_key":       "{{user `aws_access_key`}}",
+      "secret_key":       "{{user `aws_secret_key`}}",
+      "region":           "{{user `aws_region`}}",
+      "source_ami":       "{{user `source_ami`}}",
+      "instance_type":    "{{user `instance_type`}}",
+      "ssh_username":     "ubuntu",
+      "ami_name":         "{{user `name`}}-{{timestamp}}"
+  }],
+  "provisioners": [
+    {
+      "type": "shell",
+      "execute_command": "echo {{user `ssh_username`}} | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+      "inline": [
+        "mkdir -p /ops/{{user `scripts_dir`}}",
+        "chmod a+w /ops/{{user `scripts_dir`}}"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "{{user `scripts_dir`}}/.",
+      "destination": "/ops/{{user `scripts_dir`}}"
+    },
+    {
+      "type": "shell",
+      "execute_command": "echo {{user `ssh_username`}} | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+      "inline": [
+        "sh /ops/{{user `scripts_dir`}}/dependencies.sh",
+        "sh /ops/{{user `scripts_dir`}}/playbook.sh"
+      ]
+    },
+    {
+      "type": "ansible-local",
+      "playbook_file": "provisioning/playbook.yml",
+      "role_paths": [
+        "provisioning/roles/cis"
+      ]
+    }
+
+  ]
+}
